@@ -113,7 +113,7 @@ def glcm_diff_entropy(matrix: np.ndarray, eps: float = 10e-3) -> np.ndarray:
 
 def glcm_infmescor_1(matrix: np.ndarray, eps: float = 10e-3) -> np.ndarray:
     """
-    Measures of Correlation
+    Measures of Correlation 1
     """
     hxy = -np.sum(matrix * np.log(eps + matrix))
     hxy_1 = -np.sum(matrix * np.log(eps +
@@ -122,15 +122,12 @@ def glcm_infmescor_1(matrix: np.ndarray, eps: float = 10e-3) -> np.ndarray:
     hx = shannon_entropy(np.sum(matrix, axis=0))
     hy = shannon_entropy(np.sum(matrix, axis=1))
     measure_1 = (hxy - hxy_1) / max(hx, hy)
-
-    # measure_2 = np.sqrt(np.abs(1-np.exp(-2*(hxy_2-hxy))))
-
-    return measure_1  # , measure_2
+    return measure_1
 
 
 def glcm_infmescor_2(matrix: np.ndarray, eps: float = 10e-3) -> np.ndarray:
     """
-    Measures of Correlation
+    Measure of Correlation 2
     """
     hxy = -np.sum(matrix * np.log(eps + matrix))
     hxy_2 = -np.sum(np.sum(matrix, axis=0) * np.sum(matrix, axis=1) *
@@ -142,6 +139,9 @@ def glcm_infmescor_2(matrix: np.ndarray, eps: float = 10e-3) -> np.ndarray:
 
 
 def glcm_max_cor_coef(matrix: np.ndarray, eps: float = 1.0) -> float:
+    """
+    Maximal correlation coefficient
+    """
     px = np.sum(matrix, axis=0).reshape((-1, 1))
     py = np.sum(matrix, axis=1).reshape((-1, 1))
     prod = (px.T*py)
@@ -159,21 +159,14 @@ def feature_extraction_har(image: np.ndarray, levels: int = 256,
         distances = [1]
     if angles is None:
         angles = [0, np.pi / 4, np.pi / 2, 3 * np.pi / 4]
-    _feature_names = ('contrast', 'dissimilarity', 'homogeneity', 'ASM',
-                      'energy', 'correlation',
-                      'sum_squares_var', 'inverse_diff_moment',
-                      'sum_average', 'sum_var', 'sum_entropy',
-                      'entropy', 'diff_var', 'diff_entropy',
-                      'info_measure_corr_1', 'info_measure_corr_2',
-                      'max_corr_coeff')
-    image = rescale(image, 0, 255).astype('uint8')
-    features_df = np.zeros(len(distances) * len(angles) * len(_feature_names))
+    image = rescale(image, 0, 255).astype('uint8')  # skimage implementation takes uint8 only!
+    features_df = np.zeros(len(distances) * len(angles) * len(feature_names))
     matrices = glcm(image, levels=levels, normed=True,
-                    distances=distances, angles=angles)
+                    distances=distances, angles=angles)  # grey-level co-occurrence matrices themselves
     props = ['contrast', 'dissimilarity',
              'homogeneity', 'ASM', 'energy', 'correlation']
     features_df[:len(distances) * len(angles) * len(props)] = np.concatenate(
-        [gcpr(matrices, prop,).ravel() for prop in props])
+        [gcpr(matrices, prop,).ravel() for prop in props])  # the skimage-'native' GLCM-based features
     k = 0
     for i, feat in enumerate([glcm_variance, glcm_idm, glcm_sum_average,
                               glcm_sum_variance, glcm_sum_entropy,
